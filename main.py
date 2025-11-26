@@ -4,7 +4,8 @@ import uas
 import users as User
 from Pesanan import show_pesanan
 from PyQt6.QtCore import QSize, Qt,pyqtSignal
-from PyQt6.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
+       
+from PyQt6.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel, QSqlTableModel
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -15,8 +16,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QTabWidget,
     QLabel,
-    QPushButton
-    
+    QPushButton,
 )
 
 
@@ -76,17 +76,17 @@ class MainWindow(QMainWindow):
         self.query = QSqlQuery(db=self.db)
 
         self.update_query()
-        self.model.setHeaderData(0, Qt.Orientation.Horizontal, "Panjang Lengan")
-        self.model.setHeaderData(1, Qt.Orientation.Horizontal, "Lingkar Pinggang")
-        self.model.setHeaderData(2, Qt.Orientation.Horizontal, "Lingkar Dada")
-        self.model.setHeaderData(3, Qt.Orientation.Horizontal, "Lebar Bahu")
-        self.model.setHeaderData(4, Qt.Orientation.Horizontal, "Lingkar Pinggul")
-        self.model.setHeaderData(5, Qt.Orientation.Horizontal, "Panjang Baju")
-        self.model.setHeaderData(6, Qt.Orientation.Horizontal, "Tanggal Pesan")
-        self.model.setHeaderData(7, Qt.Orientation.Horizontal, "Tanggal Ambil")
-        self.model.setHeaderData(8, Qt.Orientation.Horizontal, "Harga")
-        self.model.setHeaderData(9, Qt.Orientation.Horizontal, "Nama Pelanggan")
-        self.model.setHeaderData(10, Qt.Orientation.Horizontal, "Nama Penjahit")
+        self.model.setHeaderData(2, Qt.Orientation.Horizontal, "Panjang Lengan")
+        self.model.setHeaderData(3, Qt.Orientation.Horizontal, "Lingkar Pinggang")
+        self.model.setHeaderData(4, Qt.Orientation.Horizontal, "Lingkar Dada")
+        self.model.setHeaderData(5, Qt.Orientation.Horizontal, "Lebar Bahu")
+        self.model.setHeaderData(6, Qt.Orientation.Horizontal, "Lingkar Pinggul")
+        self.model.setHeaderData(7, Qt.Orientation.Horizontal, "Panjang Baju")
+        self.model.setHeaderData(8, Qt.Orientation.Horizontal, "Tanggal Pesan")
+        self.model.setHeaderData(9, Qt.Orientation.Horizontal, "Tanggal Ambil")
+        self.model.setHeaderData(10, Qt.Orientation.Horizontal, "Harga")
+        self.model.setHeaderData(0, Qt.Orientation.Horizontal, "Nama Pelanggan")
+        self.model.setHeaderData(1, Qt.Orientation.Horizontal, "Nama Penjahit")
 
         self.setMinimumSize(QSize(1024, 600))
         self.child_window = None
@@ -98,9 +98,9 @@ class MainWindow(QMainWindow):
         self.child_window.show()
     def update_query(self):
         sql = """
-            SELECT baju.panjang_lengan, baju.lingkar_pinggang, baju.lingkar_dada,
+            SELECT users.nama, penjahit.nama_penjahit,baju.panjang_lengan, baju.lingkar_pinggang, baju.lingkar_dada,
                 baju.lebar_bahu, baju.lingkar_pinggul, baju.panjang_baju, baju.tanggal_pesan,
-                baju.tanggal_ambil, baju.harga, users.nama, penjahit.nama_penjahit
+                baju.tanggal_ambil, baju.harga 
             FROM baju JOIN users ON baju.id_user = users.id_user JOIN penjahit ON baju.id_penjahit = penjahit.id_penjahit
         """
         self.model.setQuery(sql, self.db)
@@ -108,45 +108,33 @@ class MainWindow(QMainWindow):
     def pelanggan(self):
         container = QWidget()
         layout_search = QHBoxLayout()
+        layout_view = QVBoxLayout()
+
         btn = QPushButton("Buka Window Baru")
+        layout_view.addWidget(btn)
         btn.clicked.connect(self.open_new_window)
+
         self.track = QLineEdit()
         self.track.setPlaceholderText("Track name...")
+        layout_view.addWidget(self.track)
         self.track.textChanged.connect(self.update_query)
 
-        self.composer = QLineEdit()
-        self.composer.setPlaceholderText("Artist name...")
-        self.composer.textChanged.connect(self.update_query)
+        basedir = os.path.dirname(__file__)
 
-        self.album = QLineEdit()
-        self.album.setPlaceholderText("Album name...")
-        self.album.textChanged.connect(self.update_query)
+        db = QSqlDatabase("QSQLITE")
+        db.setDatabaseName(os.path.join(basedir, "penjahit.sqlite"))
+        db.open()
 
-        layout_search.addWidget(self.track)
-        layout_search.addWidget(self.composer)
-        layout_search.addWidget(self.album)
+        self.table_pelanggan = QTableView()
+        self.model_pelanggan = QSqlTableModel(db=db)
+        self.model_pelanggan.setTable("users")
+        self.model_pelanggan.select()
 
-        layout_view = QVBoxLayout()
-        layout_view.addLayout(layout_search)
-
-        layout_view.addWidget(btn)
-        self.table = QTableView()
-
-        layout_view.addWidget(self.table)
+        self.table_pelanggan.setModel(self.model_pelanggan)
+        layout_view.addWidget(self.table_pelanggan)
 
         container.setLayout(layout_view)
-
-        self.model_pelanggan = QSqlQueryModel()
-        self.table.setModel(self.model_pelanggan)
-
-        self.query = QSqlQuery(db=self.db)
-
-        self.query.prepare(
-            """SELECT * FROM users
-            """
-        )
-        self.update_query()
-        self.setMinimumSize(QSize(1024, 600))
+        self.setCentralWidget(container)
         return container
     
     def penjahit(self):
@@ -172,14 +160,14 @@ class MainWindow(QMainWindow):
         layout_view = QVBoxLayout()
         layout_view.addLayout(layout_search)
 
-        self.table = QTableView()
+        self.table_penjahit = QTableView()
 
-        layout_view.addWidget(self.table)
+        layout_view.addWidget(self.table_penjahit)
 
         container.setLayout(layout_view)
 
         self.model_penjahit = QSqlQueryModel()
-        self.table.setModel(self.model_penjahit)
+        self.table_penjahit.setModel(self.model_penjahit)
 
         self.query = QSqlQuery(db=self.db)
 
@@ -187,7 +175,7 @@ class MainWindow(QMainWindow):
             """SELECT * FROM penjahit
             """
         )
-        self.update_query()
+        # self.update_query()
 
         self.setMinimumSize(QSize(1024, 600))
         # self.setCentralWidget(container)

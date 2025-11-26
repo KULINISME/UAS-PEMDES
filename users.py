@@ -36,6 +36,8 @@ class show_users(QMainWindow, detail):
         self.pushButton.clicked.connect(self.dispPrevious)
         self.pushButton_2.clicked.connect(self.dispNext)
         self.pushButton_3.clicked.connect(self.dispLast)
+        self.pushButton_5.clicked.connect(self.edit)
+        
     def displayRec(self):
         self.record=self.model.record(show_users.recno)
         self.lineEdit.setText(str(self.record.value("nama")))
@@ -58,6 +60,9 @@ class show_users(QMainWindow, detail):
         if show_users.recno > self.model.rowCount()-1:
             show_users.recno = self.model.rowCount()-1
         self.displayRec()
+    
+    def edit(self):
+        print("Button Clicked")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
