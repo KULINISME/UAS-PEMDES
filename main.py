@@ -2,7 +2,7 @@ import os
 import sys
 import uas
 import users as User
-
+from Pesanan import show_pesanan
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery, QSqlQueryModel
 from PyQt6.QtWidgets import (
@@ -41,8 +41,7 @@ class MainWindow(QMainWindow):
     def menu(self):
         container = QWidget()
         layout_search = QHBoxLayout()
-        btn = QPushButton("Buka Window Baru")
-        btn.clicked.connect(self.open_new_window)
+        
         self.track = QLineEdit()
         self.track.setPlaceholderText("Track name...")
         self.track.textChanged.connect(self.update_query)
@@ -61,7 +60,9 @@ class MainWindow(QMainWindow):
 
         layout_view = QVBoxLayout()
         layout_view.addLayout(layout_search)
-        layout_view.addWidget(btn)
+        tambah = QPushButton("Buka Window Baru")
+        tambah.clicked.connect(self.tambahPesananForm)
+        layout_view.addWidget(tambah)
         self.table = QTableView()
 
         layout_view.addWidget(self.table)
@@ -86,10 +87,16 @@ class MainWindow(QMainWindow):
         self.child_window = None
         return container
     
+    def tambahPesananForm(self):
+        self.child_window = show_pesanan()
+        self.child_window.show()
+    
+    
     def pelanggan(self):
         container = QWidget()
         layout_search = QHBoxLayout()
-
+        btn = QPushButton("Buka Window Baru")
+        btn.clicked.connect(self.open_new_window)
         self.track = QLineEdit()
         self.track.setPlaceholderText("Track name...")
         self.track.textChanged.connect(self.update_query)
@@ -109,6 +116,7 @@ class MainWindow(QMainWindow):
         layout_view = QVBoxLayout()
         layout_view.addLayout(layout_search)
 
+        layout_view.addWidget(btn)
         self.table = QTableView()
 
         layout_view.addWidget(self.table)
